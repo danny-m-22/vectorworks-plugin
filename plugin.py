@@ -56,8 +56,13 @@ def format_coordinates(h_focus):
         x_ft = x_ft + "'"
         x_in = x_in + '"'
     except IndexError:
-        x_ft = "1'"
-        x_in = '0"'
+        x_in = "0'"
+        x_num = y_string.split('"')
+        x_num = round(float(x_num[0]) / 12)
+        if x_num == 0:
+            x_ft = "0'"
+        else:
+            x_ft = "1'"
 
     try:
         y_split = y_string.split("'")
@@ -73,7 +78,7 @@ def format_coordinates(h_focus):
     except IndexError:
         y_in = "0'"
         y_num = y_string.split('"')
-        y_num = round(int(y_num[0])/12)
+        y_num = round(float(y_num[0])/12)
         if y_num == 0:
             y_ft = "0'"
         elif y_num == 1:
@@ -95,7 +100,7 @@ def format_coordinates(h_focus):
     except IndexError:
         z_in = "0'"
         z_num = z_string.split('"')
-        z_num = round(int(z_num[0])/12)
+        z_num = round(float(z_num[0])/12)
         if z_num == 0:
             z_ft = "0'"
         elif z_num == 1:
