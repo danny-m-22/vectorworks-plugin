@@ -1,114 +1,115 @@
 import vs
 
-# NOTE: This will not run in an IDE because of import vs
-# It should run in VectorWorks, though
-
 # CONFIGURATION
 # ---------------------------------------------------------------------
-# Change this to True if your Stage Left is on the Negative X side.
-# Change to False if your Stage Left is on the Positive X side.
+# Set to True if you want "L" to be negative X (Stage Left = -X)
+# Set to False if you want "L" to be positive X
 CARTESIAN_LEFT_IS_L = False
 
-# Change this to 'User Field #', with # being your desired output column number
+# The User Field to overwrite
 TARGET_FIELD = 'User Field 6'
+
+
 # ---------------------------------------------------------------------
 
-def format_coordinates(h_focus):
+def get_feet_inch_str(val_in_feet):
     """
-    Returns the X, Y, Z tuple formatted as strings.
+    Converts a decimal foot value (e.g. 5.5) to a string "5'-6\""
+    Does NOT handle signs (+/-) or suffixes.
     """
-    # Get the Focus Point object
-    focus_point = vs.GetSymLoc3D(h_focus)
-    x, y, z = focus_point
+    # Work with absolute positive value for math
+    abs_val = abs(val_in_feet)
 
-    # Format Y and Z using document units (feet/inches handled automatically)
-    # Use abs() to remove the negative sign so L/R can be manually added
+    # Calculate feet and inches
+    feet = int(abs_val)
+    # Get remainder, multiply by 12, round to nearest whole inch
+    inches = round((abs_val - feet) * 12)
 
-    y_string = vs.Num2StrF(y).strip()
-    z_string = vs.Num2StrF(z).strip()
-    x_abs_string = vs.Num2StrF(abs(x)).strip()
+    # Handle the rollover case (e.g., 11.9 inches rounds to 12)
+    if inches == 12:
+        feet += 1
+        inches = 0
 
-    # Split feet and inches for final formatting touches
-    x_split = x_abs_string.split("'")
-    y_split = y_string.split("'")
-    z_split = z_string.split("'")
+    return f"{feet}'-{inches}\""
 
-    # Round decimal of inches
-    x_split[1] = str(round(float(x_split[1].replace('"',"")))) + '"'
-    y_split[1] = str(round(float(y_split[1].replace('"', "")))) + '"'
-    z_split[1] = str(round(float(z_split[1].replace('"', "")))) + '"'
 
-    # Add + sign to y and z values that are positive
-    if int(y_split[1]) > 0:
-        y_split[1] =  "+" + y_split[1]
+def format_coords(h_focus):
+    # Get coordinates (returns tuple in document units)
+    # We assume these are in Feet (standard for Spotlight Feet & Inch files)
+    pt = vs.GetSymLoc3D(h_focus)
+    x, y, z = pt
 
-    if int(z_split[1]) > 0:
-        z_split[1] =  "+" + z_split[1]
+    # --- FORMAT X (Stage Left/Right) ---
+    # 1. Get base string (e.g. 5'-6")
+    x_base = get_feet_inch_str(x)
 
-    # Add dash between feet and inches
-    x_string = x_split[0] + "-" + x_split[1]
-    y_string = y_split[0] + "-" + y_split[1]
-    z_string = z_split[0] + "-" + z_split[1]
-
-    # Format X with L/R ending
+    # 2. Determine Suffix
     suffix = ""
-
-    # Determine L/R based on configuration
-    # Note: at the Configuration section at the top, you can reverse this
-    # by setting CARTESIAN_LEFT_IS_L = False
-
     if x < 0:
         suffix = "L" if CARTESIAN_LEFT_IS_L else "R"
     elif x > 0:
         suffix = "R" if CARTESIAN_LEFT_IS_L else "L"
     else:
-        suffix = ""  # Center Line (0)
+        suffix = ""
 
-    x_string = f"{x_string}{suffix}"
+    x_final = f"{x_base}{suffix}"
 
-    return x_string, y_string, z_string
+    # --- FORMAT Y (Up/Down Stage) ---
+    # Requirements: Always show sign (+ or -)
+    y_base = get_feet_inch_str(y)
+
+    if y > 0:
+        y_final = f"+{y_base}"
+    elif y < 0:
+        y_final = f"-{y_base}"
+    else:
+        y_final = y_base  # Zero has no sign usually, or use "+0'-0"" if preferred
+
+    # --- FORMAT Z (Height) ---
+    # Requirements: Always show sign (+ or -)
+    z_base = get_feet_inch_str(z)
+
+    if z > 0:
+        z_final = f"+{z_base}"
+    elif z < 0:
+        z_final = f"-{z_base}"
+    else:
+        z_final = z_base
+
+    return x_final, y_final, z_final
 
 
 def update_light(h):
-    """
-    Function that runs on every Lighting Device.
-    """
-    # 1. Get the name of the focus point from the Light's data
+    # 1. Check for Focus Record
     focus_name = vs.GetRField(h, 'Lighting Device', 'Focus')
 
-    # 2. If no focus is assigned, clear the field and exit
+    # 2. Clean up if empty
     if not focus_name:
         vs.SetRField(h, 'Lighting Device', TARGET_FIELD, '')
         return
 
-    # 3. Find the actual Focus Point object in the drawing
+    # 3. Find object
     h_focus = vs.GetObject(focus_name)
-
-    # If the focus point name is text but the object doesn't exist, exit
     if h_focus == vs.Handle(0):
         return
 
-    # 4. Get formatted coordinates
-    x_string, y_string, z_string = format_coordinates(h_focus)
+    # 4. Get Strings
+    x_str, y_str, z_str = format_coords(h_focus)
 
-    # 5. Concatenate into one string.
-    # Example of format: 5'-0"L, 10'-0", 12'-0"
-    final_data = f"{x_string}, {y_string}, {z_string}"
+    # 5. Combine: 5'-6"R, -6'-3", +7'-2"
+    final_data = f"{x_str}, {y_str}, {z_str}"
 
-    # 6. Write to the Lighting Device in the specified User Field column
+    # 6. Write and Reset
     vs.SetRField(h, 'Lighting Device', TARGET_FIELD, final_data)
-
-    # 7. Reset object to ensure OIP updates visually (optional, but good safety)
     vs.ResetObject(h)
 
 
 def main():
-    # Select all objects that have the 'Lighting Device' record attached
+    # Only run on Lighting Devices
     criteria = "(R IN ['Lighting Device'])"
     vs.ForEachObject(update_light, criteria)
 
-    # Notify user when done
-    vs.AlrtDialog(f"Update Complete! Check {TARGET_FIELD}.")
+    vs.AlrtDialog(f"Update Complete! Data written to {TARGET_FIELD}.")
 
 
 if __name__ == "__main__":
