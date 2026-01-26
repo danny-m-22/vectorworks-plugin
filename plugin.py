@@ -2,7 +2,7 @@
 """
 Hello! Please read these notes even if you do not know Python:
 
-NOTE 1: I do not have VectorWorks and have not tested this extensively.
+NOTE 1: I do not have Vectorworks and have not tested this extensively.
 Please ensure that the values you get are accurate:
 I am not responsible for any errors this may cause, 
 but please let me know if you are getting errors. 
@@ -16,7 +16,7 @@ it will not run if you don't.
 
 NOTE 3: this file does NOT handle fractions:
 1 3/4" won't work but 1.75" will.
-Change your VectorWorks settings so it will work.
+Change your Vectorworks settings so it will work.
 I can add functionality for this if needed,
 but it is much easier to just change this setting.
 
@@ -37,7 +37,7 @@ specified by H.A.G.:
 """
 
 # This code will not run in an IDE because of this import statement;
-# it will only run in VectorWorks
+# it will only run in Vectorworks
 import vs
 
 # CONFIGURATION
