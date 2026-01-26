@@ -1,8 +1,5 @@
 import vs
 
-# FIX 0 FEET ISSUE
-
-
 
 # NOTE: This will not run in an IDE because of import vs
 # It should run in VectorWorks, though
@@ -52,12 +49,12 @@ def format_coordinates(h_focus):
         x_in = x_split[1]
         x_in = x_in[0:-1]
         x_in = str(round(float(x_in)))
-        x_ft, x_in = unit_conversion(int(x_ft), int(x_in))
+        x_ft, x_in = unit_conversion(int(float(x_ft)), int(float(x_in)))
         x_ft = x_ft + "'"
         x_in = x_in + '"'
     except IndexError:
-        x_in = "0'"
-        x_num = y_string.split('"')
+        x_in = '0"'
+        x_num = x_abs_string.split('"')
         x_num = round(float(x_num[0]) / 12)
         if x_num == 0:
             x_ft = "0'"
@@ -70,8 +67,8 @@ def format_coordinates(h_focus):
         y_in = y_split[1]
         y_in = y_in[0:-1]
         y_in = str(round(float(y_in)))
-        y_ft, y_in = unit_conversion(int(y_ft), int(y_in))
-        if int(y_ft) >= 0:
+        y_ft, y_in = unit_conversion(int(float(y_ft)), int(float(y_in)))
+        if int(float(y_ft)) >= 0:
             y_ft = "+" + y_ft
         y_ft = y_ft + "'"
         y_in = y_in + '"'
@@ -92,8 +89,8 @@ def format_coordinates(h_focus):
         z_in = z_split[1]
         z_in = z_in[0:-1]
         z_in = str(round(float(z_in)))
-        z_ft, z_in = unit_conversion(int(z_ft), int(z_in))
-        if int(z_ft) >= 0:
+        z_ft, z_in = unit_conversion(int(float(z_ft)), int(float(z_in)))
+        if int(float(z_ft)) >= 0:
             z_ft = "+" + z_ft
         z_ft = z_ft + "'"
         z_in = z_in + '"'
