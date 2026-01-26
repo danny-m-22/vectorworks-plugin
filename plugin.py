@@ -1,115 +1,170 @@
 import vs
 
+# FIX 0 FEET ISSUE
+
+
+
+# NOTE: This will not run in an IDE because of import vs
+# It should run in VectorWorks, though
+
 # CONFIGURATION
 # ---------------------------------------------------------------------
-# Set to True if you want "L" to be negative X (Stage Left = -X)
-# Set to False if you want "L" to be positive X
+# Change this to True if your Stage Left is on the Negative X side.
+# Change to False if your Stage Left is on the Positive X side.
 CARTESIAN_LEFT_IS_L = False
 
-# The User Field to overwrite
+# Change this to 'User Field #', with # being your desired output column number
 TARGET_FIELD = 'User Field 6'
-
-
 # ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+def unit_conversion(feet, inches):
+    is_negative = feet < 0 or inches < 0
 
-def get_feet_inch_str(val_in_feet):
-    """
-    Converts a decimal foot value (e.g. 5.5) to a string "5'-6\""
-    Does NOT handle signs (+/-) or suffixes.
-    """
-    # Work with absolute positive value for math
-    abs_val = abs(val_in_feet)
-
-    # Calculate feet and inches
-    feet = int(abs_val)
-    # Get remainder, multiply by 12, round to nearest whole inch
-    inches = round((abs_val - feet) * 12)
-
-    # Handle the rollover case (e.g., 11.9 inches rounds to 12)
-    if inches == 12:
+    if inches == 12 and not is_negative:
         feet += 1
         inches = 0
+    elif inches == 12 and is_negative:
+        feet -= 1
+        inches = 0
+    return str(feet), str(inches)
 
-    return f"{feet}'-{inches}\""
+
+def format_coordinates(h_focus):
+    """
+    Returns the X, Y, Z tuple formatted as strings.
+    """
+    # Get the Focus Point object
+    focus_point = vs.GetSymLoc3D(h_focus)
+    x, y, z = focus_point
+
+    # Format Y and Z using document units (feet/inches handled automatically)
+    # Use abs() to remove the negative sign so L/R can be manually added
+
+    y_string = vs.Num2StrF(y).strip()
+    z_string = vs.Num2StrF(z).strip()
+    x_abs_string = vs.Num2StrF(abs(x)).strip()
 
 
-def format_coords(h_focus):
-    # Get coordinates (returns tuple in document units)
-    # We assume these are in Feet (standard for Spotlight Feet & Inch files)
-    pt = vs.GetSymLoc3D(h_focus)
-    x, y, z = pt
+    # Split feet and inches for formatting
+    try:
+        x_split = x_abs_string.split("'")
+        x_ft = x_split[0]
+        x_in = x_split[1]
+        x_in = x_in[0:-1]
+        x_in = str(round(float(x_in)))
+        x_ft, x_in = unit_conversion(int(x_ft), int(x_in))
+        x_ft = x_ft + "'"
+        x_in = x_in + '"'
+    except IndexError:
+        x_ft = "1'"
+        x_in = '0"'
 
-    # --- FORMAT X (Stage Left/Right) ---
-    # 1. Get base string (e.g. 5'-6")
-    x_base = get_feet_inch_str(x)
+    try:
+        y_split = y_string.split("'")
+        y_ft = y_split[0]
+        y_in = y_split[1]
+        y_in = y_in[0:-1]
+        y_in = str(round(float(y_in)))
+        y_ft, y_in = unit_conversion(int(y_ft), int(y_in))
+        if int(y_ft) >= 0:
+            y_ft = "+" + y_ft
+        y_ft = y_ft + "'"
+        y_in = y_in + '"'
+    except IndexError:
+        y_in = "0'"
+        y_num = y_string.split('"')
+        y_num = round(int(y_num[0])/12)
+        if y_num == 0:
+            y_ft = "0'"
+        elif y_num == 1:
+            y_ft = "+1'"
+        else:
+            y_ft = "-1'"
 
-    # 2. Determine Suffix
+    try:
+        z_split = z_string.split("'")
+        z_ft = z_split[0]
+        z_in = z_split[1]
+        z_in = z_in[0:-1]
+        z_in = str(round(float(z_in)))
+        z_ft, z_in = unit_conversion(int(z_ft), int(z_in))
+        if int(z_ft) >= 0:
+            z_ft = "+" + z_ft
+        z_ft = z_ft + "'"
+        z_in = z_in + '"'
+    except IndexError:
+        z_in = "0'"
+        z_num = z_string.split('"')
+        z_num = round(int(z_num[0])/12)
+        if z_num == 0:
+            z_ft = "0'"
+        elif z_num == 1:
+            z_ft = "+1'"
+        else:
+            z_ft = "-1'"
+
+    # Determine L/R for X based on configuration
+    # Note: at the Configuration section at the top, you can reverse this
+    # by setting CARTESIAN_LEFT_IS_L = False
     suffix = ""
+
     if x < 0:
         suffix = "L" if CARTESIAN_LEFT_IS_L else "R"
     elif x > 0:
         suffix = "R" if CARTESIAN_LEFT_IS_L else "L"
     else:
-        suffix = ""
+        suffix = ""  # Center Line (0)
 
-    x_final = f"{x_base}{suffix}"
 
-    # --- FORMAT Y (Up/Down Stage) ---
-    # Requirements: Always show sign (+ or -)
-    y_base = get_feet_inch_str(y)
+    # Add dash between feet and inches as well as ' and " symbols
+    x_string = x_ft + "-" + x_in + suffix
+    y_string = y_ft + "-" + y_in
+    z_string = z_ft + "-" + z_in
 
-    if y > 0:
-        y_final = f"+{y_base}"
-    elif y < 0:
-        y_final = f"-{y_base}"
-    else:
-        y_final = y_base  # Zero has no sign usually, or use "+0'-0"" if preferred
 
-    # --- FORMAT Z (Height) ---
-    # Requirements: Always show sign (+ or -)
-    z_base = get_feet_inch_str(z)
-
-    if z > 0:
-        z_final = f"+{z_base}"
-    elif z < 0:
-        z_final = f"-{z_base}"
-    else:
-        z_final = z_base
-
-    return x_final, y_final, z_final
+    return x_string, y_string, z_string
 
 
 def update_light(h):
-    # 1. Check for Focus Record
+    """
+    Function that runs on every Lighting Device.
+    """
+    # 1. Get the name of the focus point from the Light's data
     focus_name = vs.GetRField(h, 'Lighting Device', 'Focus')
 
-    # 2. Clean up if empty
+    # 2. If no focus is assigned, clear the field and exit
     if not focus_name:
         vs.SetRField(h, 'Lighting Device', TARGET_FIELD, '')
         return
 
-    # 3. Find object
+    # 3. Find the actual Focus Point object in the drawing
     h_focus = vs.GetObject(focus_name)
+
+    # If the focus point name is text but the object doesn't exist, exit
     if h_focus == vs.Handle(0):
         return
 
-    # 4. Get Strings
-    x_str, y_str, z_str = format_coords(h_focus)
+    # 4. Get formatted coordinates
+    x_string, y_string, z_string = format_coordinates(h_focus)
 
-    # 5. Combine: 5'-6"R, -6'-3", +7'-2"
-    final_data = f"{x_str}, {y_str}, {z_str}"
+    # 5. Concatenate into one string.
+    # Example of format: 5'-0"L, 10'-0", 12'-0"
+    final_data = f"{x_string}, {y_string}, {z_string}"
 
-    # 6. Write and Reset
+    # 6. Write to the Lighting Device in the specified User Field column
     vs.SetRField(h, 'Lighting Device', TARGET_FIELD, final_data)
+
+    # 7. Reset object to ensure OIP updates visually (optional, but good safety)
     vs.ResetObject(h)
 
 
 def main():
-    # Only run on Lighting Devices
+    # Select all objects that have the 'Lighting Device' record attached
     criteria = "(R IN ['Lighting Device'])"
     vs.ForEachObject(update_light, criteria)
 
-    vs.AlrtDialog(f"Update Complete! Data written to {TARGET_FIELD}.")
+    # Notify user when done
+    vs.AlrtDialog(f"Update Complete! Check {TARGET_FIELD}.")
 
 
 if __name__ == "__main__":
