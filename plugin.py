@@ -7,7 +7,7 @@ import vs
 # ---------------------------------------------------------------------
 # Change this to True if your Stage Left is on the Negative X side.
 # Change to False if your Stage Left is on the Positive X side.
-CARTESIAN_LEFT_IS_L = True
+CARTESIAN_LEFT_IS_L = False
 
 # Change this to 'User Field #', with # being your desired output column number
 TARGET_FIELD = 'User Field 6'
@@ -44,6 +44,28 @@ def format_coordinates(h_focus):
         suffix = ""  # Center Line (0)
 
     x_string = f"{x_abs_string}{suffix}"
+
+    # Split feet and inches for final formatting touches
+    x_split = x_string.split("'")
+    y_split = y_string.split("'")
+    z_split = z_string.split("'")
+
+    # Round decimal of inches
+    x_split[1] = str(round(float(x_split[1].replace('"',"")))) + '"'
+    y_split[1] = str(round(float(y_split[1].replace('"', "")))) + '"'
+    z_split[1] = str(round(float(z_split[1].replace('"', "")))) + '"'
+
+    # Add + sign to y and z values that are positive
+    if int(y_split[1]) > 0:
+        y_split[1] =  "+" + y_split[1]
+
+    if int(z_split[1]) > 0:
+        z_split[1] =  "+" + z_split[1]
+
+    # Add dash between feet and inches
+    x_string = x_split[0] + "-" + x_split[1]
+    y_string = y_split[0] + "-" + y_split[1]
+    z_string = z_split[0] + "-" + z_split[1]
 
     return x_string, y_string, z_string
 
