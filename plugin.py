@@ -22,31 +22,14 @@ def format_coordinates(h_focus):
     x, y, z = focus_point
 
     # Format Y and Z using document units (feet/inches handled automatically)
+    # Use abs() to remove the negative sign so L/R can be manually added
+
     y_string = vs.Num2StrF(y).strip()
     z_string = vs.Num2StrF(z).strip()
-
-    # Format X with L/R ending
-    # Use abs() to remove the negative sign so L/R can be manually added
-    # x value will still have inch and feet units
     x_abs_string = vs.Num2StrF(abs(x)).strip()
 
-    suffix = ""
-
-    # Determine L/R based on configuration
-    # Note: at the Configuration section at the top, you can reverse this
-    # by setting CARTESIAN_LEFT_IS_L = False
-
-    if x < 0:
-        suffix = "L" if CARTESIAN_LEFT_IS_L else "R"
-    elif x > 0:
-        suffix = "R" if CARTESIAN_LEFT_IS_L else "L"
-    else:
-        suffix = ""  # Center Line (0)
-
-    x_string = f"{x_abs_string}{suffix}"
-
     # Split feet and inches for final formatting touches
-    x_split = x_string.split("'")
+    x_split = x_abs_string.split("'")
     y_split = y_string.split("'")
     z_split = z_string.split("'")
 
@@ -66,6 +49,22 @@ def format_coordinates(h_focus):
     x_string = x_split[0] + "-" + x_split[1]
     y_string = y_split[0] + "-" + y_split[1]
     z_string = z_split[0] + "-" + z_split[1]
+
+    # Format X with L/R ending
+    suffix = ""
+
+    # Determine L/R based on configuration
+    # Note: at the Configuration section at the top, you can reverse this
+    # by setting CARTESIAN_LEFT_IS_L = False
+
+    if x < 0:
+        suffix = "L" if CARTESIAN_LEFT_IS_L else "R"
+    elif x > 0:
+        suffix = "R" if CARTESIAN_LEFT_IS_L else "L"
+    else:
+        suffix = ""  # Center Line (0)
+
+    x_string = f"{x_string}{suffix}"
 
     return x_string, y_string, z_string
 
