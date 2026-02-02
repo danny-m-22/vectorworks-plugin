@@ -51,11 +51,30 @@ TARGET_FIELD = 'User Field 6'
 
 
 # You will not need to change anything within this helper function
-def unit_conversion(feet, inches):
-    if inches == 12:
+def unit_conversion(feet, inches, round_quarter=False):
+    """
+    Handles rounding and rollover logic.
+    round_quarter: If True, rounds inches to nearest 3" (0, 3, 6, 9, 12).
+    """
+    # 1. Normalize inches (handle cases where inches > 12)
+    extra_feet = int(inches // 12)
+    feet += extra_feet
+    rem_inches = inches % 12
+
+    # 2. Round the remainder
+    if round_quarter:
+        # Round to nearest 3 (Quarter Foot)
+        rem_inches = int(round(rem_inches / 3.0) * 3)
+    else:
+        # Standard rounding to nearest 1
+        rem_inches = int(round(rem_inches))
+
+    # 3. Handle rollover (12" -> 0")
+    if rem_inches == 12:
         feet += 1
-        inches = 0
-    return str(feet), str(inches)
+        rem_inches = 0
+
+    return str(feet), str(rem_inches)
 
 
 
@@ -93,7 +112,7 @@ def format_coordinates(h_focus):
         x_in = x_split[1]
         x_in = x_in[0:-1]
         x_in = str(round(float(x_in)))
-        x_ft, x_in = unit_conversion(int(float(x_ft)), int(float(x_in)))
+        x_ft, x_in = unit_conversion(int(float(x_ft)), float(x_in), round_quarter=True)
         x_ft = x_ft + "'"
         x_in = x_in + '"'
     except IndexError:
@@ -116,7 +135,7 @@ def format_coordinates(h_focus):
         y_in = y_split[1]
         y_in = y_in[0:-1]
         y_in = str(round(float(y_in)))
-        y_ft, y_in = unit_conversion(int(float(y_ft)), int(float(y_in)))
+        y_ft, y_in = unit_conversion(int(float(y_ft)), float(y_in), round_quarter=True)
     except IndexError:
         # Inches only case
         y_in = "0"
@@ -141,7 +160,7 @@ def format_coordinates(h_focus):
         z_in = z_split[1]
         z_in = z_in[0:-1]
         z_in = str(round(float(z_in)))
-        z_ft, z_in = unit_conversion(int(float(z_ft)), int(float(z_in)))
+        z_ft, z_in = unit_conversion(int(float(z_ft)), float(z_in), round_quarter=False)
     except IndexError:
         z_in = "0"
         try:
