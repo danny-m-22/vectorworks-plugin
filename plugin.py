@@ -87,7 +87,7 @@ def format_coordinates(h_focus):
     """
     # Get the raw, unformatted coordinates
     focus_point = vs.GetSymLoc3D(h_focus) # internal origin
-    user_origin_x, user_origin_y = vs.GetUserOrigin() # user origin
+    user_origin_x, user_origin_y = vs.GetOrigin() # user origin
     x = focus_point[0] - user_origin_x
     y = focus_point[1] - user_origin_y
     z = focus_point[2]
