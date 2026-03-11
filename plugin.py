@@ -20,10 +20,7 @@ Change your Vectorworks settings so it will work.
 I can add functionality for this if needed,
 but it is much easier to just change this setting.
 
-NOTE 4: ensure your origin is accurate (0,0,0),
-or you will get errors where at least
-one coordinate value is off by the same amount
-every time. This error has nothing to do with this plugin.
+NOTE 4: this gives coordinates relative to the user origin.
 
 NOTE 5: here is an example of the expected output, as
 specified by H.A.G.:
@@ -89,7 +86,8 @@ def format_coordinates(h_focus):
         x, y, and z strings in the required format for a given focus object
     """
     # Get the raw, unformatted coordinates
-    focus_point = vs.GetSymLoc3D(h_focus)
+    #focus_point = vs.GetSymLoc3D(h_focus) # this is internal origin
+    focus_point = vs.GetParentOri3D(h_focus) # this is for user origin
     x, y, z = focus_point
 
     # Use abs() to make reformatting easier;
