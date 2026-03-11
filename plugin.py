@@ -86,10 +86,10 @@ def format_coordinates(h_focus):
         x, y, and z strings in the required format for a given focus object
     """
     # Get the raw, unformatted coordinates
-    focus_point = vs.GetSymLoc3D(h_focus) # internal origin
-    user_origin_x, user_origin_y = vs.GetOrigin() # user origin
-    x = focus_point[0] - user_origin_x
-    y = focus_point[1] - user_origin_y
+    focus_point = vs.GetSymLoc3D(h_focus)
+    origin_x, origin_y = vs.GetOriginInDocUnits()
+    x = focus_point[0] - origin_x
+    y = focus_point[1] - origin_y
     z = focus_point[2]
 
     # Use abs() to make reformatting easier;
