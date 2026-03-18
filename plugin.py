@@ -190,7 +190,12 @@ def format_coordinates(h_focus):
     # Assemble final reformatted strings
     x_string = x_ft + "-" + x_in.replace('"', '') + '"' + suffix
     y_string = y_ft + "-" + y_in.replace('"', '') + '"'
-    z_string = z_ft + "-" + z_in.replace('"', '') + '"'
+
+    # original
+    #z_string = z_ft + "-" + z_in.replace('"', '') + '"'
+
+    # requested
+    z_string = z_ft + "-" + z_in.replace('"', '') + '"' + 'Z'
 
     return x_string, y_string, z_string
 
